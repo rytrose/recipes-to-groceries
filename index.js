@@ -79,7 +79,10 @@ async function fetchRecipes() {
 }
 
 async function addIngredientsToGroceries(recipe, recipeBlocks) {
-  let recipeTitle = recipe.properties.Name.title[0]?.plain_text;
+  let recipeTitle = recipe.properties.Name.title.reduce(
+    (l, t) => l + t.plain_text,
+    ""
+  );
   console.log(`Adding ${recipeTitle} ingredients to grocery list...`);
 
   for (let block of recipeBlocks) {
