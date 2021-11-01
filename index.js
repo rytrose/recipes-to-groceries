@@ -16,6 +16,7 @@ async function pollRecipes() {
     while (true) {
       const { results, next_cursor } = await notion.blocks.children.list({
         block_id: recipe.id,
+        start_cursor: cursor
       });
       recipeBlocks.push(...results);
       if (!next_cursor) {
