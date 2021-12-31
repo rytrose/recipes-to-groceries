@@ -14,15 +14,20 @@ async function pollRecipes() {
     let cursor = undefined;
 
     while (true) {
-      const { results, next_cursor } = await notion.blocks.children.list({
-        block_id: recipe.id,
-        start_cursor: cursor
-      });
-      recipeBlocks.push(...results);
-      if (!next_cursor) {
+      try {
+        const { results, next_cursor } = await notion.blocks.children.list({
+          block_id: recipe.id,
+          start_cursor: cursor
+        });
+        recipeBlocks.push(...results);
+        if (!next_cursor) {
+          break;
+        }
+        cursor = next_cursor;
+      } catch (error) {
+        console.error(`Unable to get blocks from recipe: ${recipe}`, error);
         break;
       }
-      cursor = next_cursor;
     }
 
     if (!recipeBlocks) {
@@ -35,20 +40,25 @@ async function pollRecipes() {
         let todoLabel = block.to_do.text.reduce((l, t) => l + t.plain_text, "");
         if (todoLabel.includes("✨")) {
           if (block.to_do.checked) {
-            await notion.blocks.update({
-              block_id: block.id,
-              to_do: {
-                text: [{ text: { content: todoLabel + " (adding, will uncheck when finished...)" } }],
-              },
-            });
-            await addIngredientsToGroceries(recipe, recipeBlocks);
-            await notion.blocks.update({
-              block_id: block.id,
-              to_do: {
-                checked: false,
-                text: [{ text: { content: todoLabel } }],
-              },
-            });
+            try {
+              await notion.blocks.update({
+                block_id: block.id,
+                to_do: {
+                  text: [{ text: { content: todoLabel + " (adding, will uncheck when finished...)" } }],
+                },
+              });
+              await addIngredientsToGroceries(recipe, recipeBlocks);
+              await notion.blocks.update({
+                block_id: block.id,
+                to_do: {
+                  checked: false,
+                  text: [{ text: { content: todoLabel } }],
+                },
+              });
+            } catch (error) {
+              console.error(`Unable to update block or add ingredients to groceries for block: ${block}`, error);
+              continue
+            }
           }
         }
       }
@@ -64,15 +74,20 @@ async function fetchRecipes() {
   let cursor = undefined;
 
   while (true) {
-    const { results, next_cursor } = await notion.databases.query({
-      database_id: RECIPIES_DATABASE_ID,
-      start_cursor: cursor,
-    });
-    recipes.push(...results);
-    if (!next_cursor) {
+    try {
+      const { results, next_cursor } = await notion.databases.query({
+        database_id: RECIPIES_DATABASE_ID,
+        start_cursor: cursor,
+      });
+      recipes.push(...results);
+      if (!next_cursor) {
+        break;
+      }
+      cursor = next_cursor;
+    } catch (error) {
+      console.error("Unable to fetch recipes", error);
       break;
     }
-    cursor = next_cursor;
   }
 
   return recipes;
