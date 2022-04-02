@@ -1,7 +1,7 @@
 const dotenv = require("dotenv");
 const { Client } = require("@notionhq/client");
 
-dotenv.config();
+dotenv.config({ path: `${__dirname}/.env` });
 const notion = new Client({ auth: process.env.NOTION_KEY });
 
 const RECIPIES_DATABASE_ID = "331f66db-fc60-4a6b-81af-ed5b890e64a9";
@@ -152,4 +152,5 @@ async function addIngredientsToGroceries(recipe, recipeBlocks) {
   console.log(`Finished adding ${recipeTitle} ingredients to grocery list.`);
 }
 
+console.log(`Started recipes-to-groceries integration.`);
 pollRecipes();
